@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calcus Workforce — AWS Training Stopwatch</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #1b4580;
+    --brand-dark: #112d55;
+    --brand-light: #2a5fa0;
+    --accent: #e8a020;
+    --accent-warm: #f5b840;
+    --white: #ffffff;
+    --danger: #e03030;
+    --success: #1a9e5a;
+    --bg: #0a0f1e;
+    --bg2: #101828;
+    --bg3: #162034;
+    --surface: rgba(27,69,128,0.13);
+    --surface2: rgba(27,69,128,0.22);
+    --border: rgba(27,69,128,0.35);
+    --border-light: rgba(255,255,255,0.08);
+    --text: #e8edf5;
+    --text-muted: #7d9ab5;
+    --text-dim: #4a6a8a;
+    --ring-normal: #1b4580;
+    --ring-warn: #e8a020;
+    --ring-danger: #e03030;
+    --ring-track: rgba(27,69,128,0.18);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 4px 32px rgba(0,0,0,0.45);
+    --glow: 0 0 40px rgba(27,69,128,0.3);
+  }
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: 'Exo 2', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* ── background grid ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(27,69,128,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(27,69,128,0.07) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(27,69,128,0.28) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── particles canvas ── */
+  #particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+  #confetti-canvas { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
+
+  /* ── layout ── */
+  .app {
+    position: relative; z-index: 2;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── header ── */
+  .header {
+    width: 100%; max-width: 900px;
+    padding: 22px 28px 0;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 14px;
+  }
+  /* Calcus Workforce logo area */
+  .brand-logo-wrap {
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .cw-logo-img-box {
+    height: 44px; max-width: 180px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; padding: 4px 10px;
+    flex-shrink: 0;
+  }
+  .cw-logo-img-box img {
+    height: auto; max-height: 34px; max-width: 150px;
+    width: auto; object-fit: contain; display: block;
+  }
+  @media (max-width: 520px) {
+    .cw-logo-img-box { max-width: 130px; height: 38px; padding: 4px 8px; }
+    .cw-logo-img-box img { max-height: 28px; max-width: 110px; }
+  }
+  .cw-logo-placeholder {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700; font-size: 15px; color: #fff;
+    letter-spacing: 2px; white-space: nowrap;
+    line-height: 1;
+  }
+  .cw-logo-placeholder span { color: var(--accent-warm); }
+
+  /* AWS badge */
+  .aws-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,153,0,0.1);
+    border: 1px solid rgba(255,153,0,0.28);
+    border-radius: 8px; padding: 5px 10px;
+    flex-shrink: 0;
+  }
+  .aws-badge .aws-icon {
+    width: 28px; height: 28px; flex-shrink: 0;
+  }
+  .aws-badge .aws-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: #ff9900;
+    line-height: 1.2;
+  }
+  @media (max-width: 520px) {
+    .aws-badge .aws-label { display: none; }
+    .cw-logo-placeholder { font-size: 12px; letter-spacing: 1px; }
+  }
+
+  .brand-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700; font-size: 20px; color: var(--white);
+    letter-spacing: 0.5px; line-height: 1.1;
+  }
+  .brand-sub {
+    font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+  .btn-icon {
+    width: 38px; height: 38px; border-radius: 9px;
+    border: 1px solid var(--border-light);
+    background: var(--surface);
+    color: var(--text-muted); font-size: 17px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .btn-icon:hover { background: var(--surface2); color: var(--white); border-color: var(--border); }
+  .btn-icon.active { color: var(--accent); border-color: var(--accent); background: rgba(232,160,32,0.1); }
+
+  /* ── main ── */
+  .main {
+    width: 100%; max-width: 900px;
+    padding: 28px 20px 0;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    flex: 1;
+  }
+  @media (max-width: 740px) {
+    .main { grid-template-columns: 1fr; }
+    .sidebar { order: 3; }
+  }
+
+  /* ── timer card ── */
+  .timer-card {
+    background: var(--bg2);
+    border: 1px solid var(--border-light);
+    border-radius: 24px;
+    padding: 36px 28px 28px;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative; overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .timer-card::before {
+    content: '';
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 200px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--brand), transparent);
+  }
+
+  /* interval label */
+  .interval-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--text-muted);
+    margin-bottom: 28px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .interval-label .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--brand-light);
+    animation: blink 1.4s ease-in-out infinite;
+  }
+  .interval-label .dot.running { background: var(--accent); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ring */
+  .ring-wrap {
+    position: relative;
+    width: 260px; height: 260px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 480px) {
+    .ring-wrap { width: 220px; height: 220px; }
+  }
+  .ring-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .ring-track { fill: none; stroke: var(--ring-track); stroke-width: 10; }
+  .ring-progress {
+    fill: none;
+    stroke: var(--brand);
+    stroke-width: 10;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 0.9s linear, stroke 0.4s ease;
+    filter: drop-shadow(0 0 6px rgba(27,69,128,0.7));
+  }
+  .ring-progress.warn { stroke: var(--ring-warn); filter: drop-shadow(0 0 8px rgba(232,160,32,0.8)); }
+  .ring-progress.danger { stroke: var(--ring-danger); filter: drop-shadow(0 0 10px rgba(224,48,48,0.9)); }
+
+  /* ring pulse animation */
+  @keyframes ringPulse { 0%,100%{opacity:1} 50%{opacity:0.72} }
+  @keyframes ringDanger { 0%,100%{opacity:1} 30%{opacity:0.6} }
+  .ring-progress.running { animation: ringPulse 2.2s ease-in-out infinite; }
+  .ring-progress.danger.running { animation: ringDanger 0.7s ease-in-out infinite; }
+
+  /* decorative inner ring */
+  .ring-inner {
+    position: absolute; inset: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    pointer-events: none;
+  }
+
+  /* digits */
+  .ring-center {
+    position: relative; z-index: 2;
+    text-align: center; user-select: none;
+  }
+  .digits {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 46px; font-weight: 700;
+    color: var(--white); line-height: 1;
+    letter-spacing: 0px;
+    transition: color 0.4s;
+    white-space: nowrap;
+  }
+  @media (max-width: 480px) { .digits { font-size: 34px; } }
+  .digits.warn { color: var(--accent-warm); }
+  .digits.danger { color: #ff6b6b; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
+  .digits.shaking { animation: shake 0.5s ease-in-out infinite; }
+
+  .session-name {
+    font-size: 12px; color: var(--text-muted); letter-spacing: 1.5px;
+    text-transform: uppercase; margin-top: 4px;
+  }
+
+  /* wrap-up badge */
+  .wrapup-badge {
+    display: none;
+    background: rgba(232,160,32,0.15);
+    border: 1px solid rgba(232,160,32,0.4);
+    border-radius: 20px; padding: 5px 14px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 2px;
+    color: var(--accent-warm); text-transform: uppercase;
+    margin-top: 8px;
+  }
+  @keyframes badgeBounce { 0%{transform:scale(0.5);opacity:0} 60%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+  .wrapup-badge.visible { display: block; animation: badgeBounce 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+  /* controls */
+  .controls {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center;
+    margin-top: 6px;
+  }
+  .btn {
+    font-family: 'Rajdhani', sans-serif; font-weight: 600;
+    font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase;
+    border: none; border-radius: 10px; cursor: pointer;
+    padding: 11px 24px; transition: all 0.2s; outline: none;
+  }
+  .btn-primary {
+    background: var(--brand); color: #fff;
+    box-shadow: 0 4px 18px rgba(27,69,128,0.5);
+  }
+  .btn-primary:hover { background: var(--brand-light); box-shadow: 0 6px 24px rgba(27,69,128,0.65); transform: translateY(-1px); }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-secondary {
+    background: var(--surface); color: var(--text-muted);
+    border: 1px solid var(--border-light);
+  }
+  .btn-secondary:hover { background: var(--surface2); color: var(--white); }
+  .btn-danger {
+    background: rgba(224,48,48,0.12); color: #ff8080;
+    border: 1px solid rgba(224,48,48,0.25);
+  }
+  .btn-danger:hover { background: rgba(224,48,48,0.22); color: #ffaaaa; }
+  .btn-success {
+    background: rgba(26,158,90,0.15); color: #4ee89a;
+    border: 1px solid rgba(26,158,90,0.3);
+  }
+
+  /* ── finish overlay ── */
+  .finish-overlay {
+    position: absolute; inset: 0; z-index: 10;
+    background: rgba(10,15,30,0.88);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    border-radius: 24px;
+    gap: 10px;
+  }
+  .finish-overlay.visible { display: flex; }
+  @keyframes finishBounce { 0%{transform:scale(0.3);opacity:0} 55%{transform:scale(1.15)} 70%{transform:scale(0.95)} 100%{transform:scale(1);opacity:1} }
+  .finish-emoji {
+    font-size: 64px;
+    animation: finishBounce 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  .finish-text {
+    font-family: 'Rajdhani', sans-serif; font-weight: 700;
+    font-size: 32px; color: var(--white); letter-spacing: 1px;
+    animation: finishBounce 0.75s 0.05s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  .finish-sub {
+    font-size: 14px; color: var(--text-muted);
+    animation: finishBounce 0.7s 0.1s both;
+  }
+  .finish-btns {
+    display: flex; gap: 10px; margin-top: 10px;
+    animation: finishBounce 0.7s 0.15s both;
+  }
+
+  /* ── sidebar ── */
+  .sidebar { display: flex; flex-direction: column; gap: 18px; }
+
+  .panel {
+    background: var(--bg2);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  .panel-title {
+    font-family: 'Rajdhani', sans-serif; font-weight: 600;
+    font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .panel-title::before {
+    content: ''; display: block; width: 14px; height: 1.5px;
+    background: var(--brand-light);
+  }
+
+  /* presets */
+  .presets-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .preset-btn {
+    font-family: 'Rajdhani', sans-serif; font-weight: 600;
+    font-size: 13px; letter-spacing: 0.5px;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm); padding: 10px 10px;
+    color: var(--text); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    transition: all 0.18s;
+    text-align: center;
+  }
+  .preset-btn:hover { background: var(--surface2); border-color: var(--brand); color: var(--white); }
+  .preset-btn .pm { font-size: 17px; font-weight: 700; color: var(--white); }
+  .preset-btn .pl { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+  .preset-btn.custom-btn {
+    border: 1px dashed rgba(232,160,32,0.4);
+    background: rgba(232,160,32,0.05);
+    color: var(--accent-warm);
+  }
+  .preset-btn.custom-btn:hover { background: rgba(232,160,32,0.12); border-color: var(--accent); }
+  .preset-btn.custom-btn .pm { color: var(--accent-warm); }
+
+  /* queue */
+  .queue-list {
+    display: flex; flex-direction: column; gap: 6px;
+    max-height: 180px; overflow-y: auto;
+  }
+  .queue-list::-webkit-scrollbar { width: 4px; }
+  .queue-list::-webkit-scrollbar-track { background: transparent; }
+  .queue-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .queue-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px;
+    background: var(--surface); border-radius: 8px;
+    border: 1px solid var(--border-light);
+    font-size: 13px;
+  }
+  .queue-item.active-item { border-color: var(--brand); background: rgba(27,69,128,0.25); }
+  .queue-item .qi-name { font-weight: 500; color: var(--text); flex: 1; }
+  .queue-item .qi-time { font-family: 'Rajdhani', sans-serif; font-weight: 600; color: var(--text-muted); font-size: 13px; margin-left: 8px; }
+  .queue-item .qi-del { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; padding: 2px 4px; line-height: 1; transition: color 0.15s; }
+  .queue-item .qi-del:hover { color: #ff6b6b; }
+  .empty-queue { font-size: 12px; color: var(--text-dim); text-align: center; padding: 14px 0; font-style: italic; }
+
+  /* log */
+  .log-list {
+    display: flex; flex-direction: column; gap: 5px;
+    max-height: 160px; overflow-y: auto;
+  }
+  .log-list::-webkit-scrollbar { width: 4px; }
+  .log-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .log-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-muted);
+    padding: 5px 8px; border-radius: 6px;
+    border-left: 2px solid var(--success);
+    background: rgba(26,158,90,0.06);
+  }
+  .log-item .li-name { flex: 1; color: var(--text); }
+  .log-item .li-time { font-family: 'Rajdhani', sans-serif; font-size: 11px; }
+  .no-log { font-size: 12px; color: var(--text-dim); text-align: center; padding: 10px 0; font-style: italic; }
+
+  /* ── custom modal ── */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(5,10,20,0.75);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px; padding: 28px;
+    width: 100%; max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    position: relative;
+  }
+  @keyframes modalIn { from{opacity:0;transform:scale(0.88) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  .modal-backdrop.open .modal { animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+  .modal h3 {
+    font-family: 'Rajdhani', sans-serif; font-weight: 700;
+    font-size: 18px; letter-spacing: 1px; color: var(--white);
+    margin-bottom: 20px;
+  }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px; }
+  .form-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 9px; padding: 10px 12px;
+    font-family: 'Exo 2', sans-serif; font-size: 14px; color: var(--white);
+    outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--brand-light); }
+  .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-footer { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-footer .btn { flex: 1; }
+
+  /* ── footer ── */
+  .footer {
+    width: 100%; padding: 24px 20px 16px;
+    text-align: center; z-index: 2; position: relative;
+  }
+  .footer p { font-size: 11px; color: var(--text-dim); letter-spacing: 0.5px; }
+  .footer a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+  .footer a:hover { color: var(--brand-light); }
+
+  /* responsive */
+  @media (max-width: 480px) {
+    .timer-card { padding: 24px 16px 20px; }
+    .presets-grid { grid-template-columns: 1fr 1fr 1fr; }
+    .btn { padding: 10px 16px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+<canvas id="confetti-canvas"></canvas>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="brand-logo-wrap">
+        <!-- Calcus Workforce Logo -->
+        <div class="cw-logo-img-box" id="cwLogoBox">
+          <img id="cwLogoImg" src="data:image/png;base64,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" alt="Calcus Workforce"
+            style="display:block; height:auto; max-height:34px; max-width:150px; width:auto; object-fit:contain;">
+          <div class="cw-logo-placeholder" id="cwLogoText" style="display:none;">
+            CALCUS<span>&nbsp;WORKFORCE</span>
+          </div>
+        </div>
+        <!-- AWS Badge -->
+        <div class="aws-badge" title="Amazon Web Services Training">
+          <svg class="aws-icon" viewBox="0 0 80 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AWS">
+            <path d="M22.9 19.1c0 .8.1 1.5.2 2 .2.5.4 1.1.7 1.7.1.2.2.4.2.6 0 .3-.2.6-.5.9l-1.7 1.1c-.2.1-.5.2-.7.2-.3 0-.6-.1-.8-.4-.4-.5-.7-1-.9-1.5-.3-.5-.5-1.1-.8-1.8-1.9 2.2-4.3 3.3-7.2 3.3-2.1 0-3.7-.6-4.9-1.7-1.2-1.2-1.8-2.7-1.8-4.7 0-2.1.7-3.7 2.2-5 1.5-1.3 3.5-1.9 6-1.9.8 0 1.7.1 2.6.2.9.1 1.8.3 2.8.6v-1.8c0-1.8-.4-3.1-1.1-3.8-.8-.7-2.1-1.1-3.9-1.1-1.7 0-3.4.2-5 .7-1.7.5-3.3 1.1-4.9 1.9-.3.1-.5.2-.7.2-.2 0-.3-.1-.4-.2-.1-.1-.2-.4-.2-.7V7.4c0-.4.1-.7.2-.9.1-.2.4-.4.8-.6 1.6-.8 3.4-1.4 5.5-1.9C10 3.5 12.2 3.2 14.5 3.2c4.2 0 7.2 1 9.1 2.9 1.9 1.9 2.8 4.8 2.8 8.7v11.4h-3.5v-7.1zm-9.9 3.7c.8 0 1.6-.1 2.5-.4.9-.3 1.7-.8 2.4-1.5.4-.5.7-1 .9-1.6.2-.6.3-1.3.3-2.2v-1.1c-.7-.2-1.5-.3-2.3-.4-.8-.1-1.6-.1-2.3-.1-1.6 0-2.8.3-3.6.9-.8.6-1.2 1.5-1.2 2.7 0 1.1.3 1.9.8 2.5.5.7 1.4 1.2 2.5 1.2z" fill="#FF9900"/>
+            <path d="M38.5 25.7c-.5 0-.8-.1-1-.2-.2-.2-.4-.5-.6-1L31 4c-.2-.6-.3-1.1-.3-1.3 0-.5.3-.8.8-.8h3.3c.5 0 .9.1 1.1.2.2.2.4.5.5 1l4.2 16.6 3.9-16.6c.1-.5.3-.8.5-1 .2-.2.6-.2 1.1-.2h2.7c.5 0 .9.1 1.1.2.2.2.4.5.5 1l3.9 16.8 4.3-16.8c.1-.5.3-.8.5-1 .2-.2.6-.2 1.1-.2h3.1c.5 0 .8.3.8.8 0 .1 0 .3-.1.5 0 .2-.1.4-.2.7l-6.1 20.5c-.1.5-.3.8-.6 1-.2.2-.6.2-1 .2H53c-.5 0-.9-.1-1.1-.2-.2-.2-.4-.5-.5-1l-3.8-16-3.8 16c-.1.5-.3.8-.5 1-.2.2-.6.2-1.1.2h-3.7z" fill="#FF9900"/>
+            <path d="M73.1 26.4c-1.8 0-3.7-.2-5.5-.6-1.8-.4-3.3-.9-4.2-1.5-.5-.3-.9-.7-.9-1.1V20c0-.5.2-.8.7-.8.2 0 .3 0 .5.1.2.1.4.1.6.2 1.4.6 2.9 1.1 4.5 1.4 1.6.3 3.2.5 4.8.5 2.5 0 4.5-.4 5.9-1.3.9-.6 1.3-1.4 1.3-2.5 0-.7-.2-1.3-.6-1.8-.4-.5-1.2-.9-2.3-1.3l-7.5-2.3c-3-.9-5.3-2.3-6.7-4.1-.9-1.2-1.3-2.5-1.3-4.1 0-1.2.3-2.3.8-3.3.5-1 1.3-1.8 2.2-2.5 1-.7 2.1-1.2 3.4-1.6 1.3-.4 2.7-.5 4.1-.5 1.1 0 2.2.1 3.3.2 1.1.2 2.1.4 3 .6.9.3 1.7.6 2.5 1 .8.3 1.4.7 1.8 1 .5.4.8.7 1 1.1.2.3.3.8.3 1.4v2.9c0 .5-.2.8-.7.8-.3 0-.6-.1-1-.4-2.8-1.2-5.7-1.8-8.7-1.8-2.3 0-4.1.3-5.4 1-.9.5-1.3 1.3-1.3 2.4 0 .7.2 1.3.7 1.8.5.5 1.4 1 2.7 1.4l7.3 2.3c2.9.9 5 2.2 6.4 3.9.9 1.1 1.4 2.5 1.4 4.1 0 1.3-.3 2.4-.8 3.4-.5 1-1.3 1.9-2.3 2.6-1 .7-2.2 1.2-3.6 1.6-1.4.5-2.9.7-4.5.7z" fill="#FF9900"/>
+            <path d="M73.5 37.9C64.2 44.6 50.8 48 39.2 48 22.8 48 8 41.7.6 31.2c-.6-.8 0-1.8 1.1-1.2 10.3 6 23 9.6 36.2 9.6 9.7 0 19.8-2 28.8-6.3 1.5-.7 2.6.9 1.6 1.9l.2-.3z" fill="#FF9900"/>
+            <path d="M77 33.9c-.8-1-.5-4.5.3-7.4.8-2.8 2.1-4.8 1.2-5.4-.8-.6-3.6 1-5.5 3.3-1.9 2.3-2.9 4.9-3.9 4.4-1.1-.5-.1-4.5.7-8.5.8-4 2.5-9.1 1.3-9.5-1.2-.4-3.9 3.1-6.2 7.1-2.3 4-3.8 8.6-4.9 8.2-1.1-.4-.8-5.1-.3-9.8.5-4.7 1.4-9.4.4-9.9-1-.5-4.5 3.4-7.1 8.1-2.6 4.7-4.4 10.1-5.5 9.7-1.1-.4-.9-5.9-.5-11.4.4-5.5 1.1-11 .1-11.3-1-.3-5.1 5.5-8.2 11.9-3 6.4-5 13.4-5.9 13.2-.9-.2-.5-7.5.2-14.7.2-1.5.3-3.1.2-4.3-.1-1.2-.5-2-1.3-1.9-1.4.2-2.8 3.7-4.1 8-1.3 4.3-2.4 9.3-3.4 9.1-.9-.2-.9-5.7-.8-11.2.1-5.5.3-11.1-.6-11.4-.9-.2-4.5 5.6-7.3 12.1-1.4 3.2-2.6 6.6-3.4 6.4-.8-.2-.8-4.1-.7-8 .1-3.9.3-7.8-.6-8-.9-.2-4.1 3.9-6.6 8.9-2.5 4.9-4.3 10.5-5.4 10.3-1.1-.2-1.1-6.4-.9-12.6v-1.2C1 15.9.3 17.7.3 17.7" fill="none"/>
+          </svg>
+          <div class="aws-label">AWS<br>Training</div>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; justify-content:center;">
+        <div class="brand-sub" style="display:none;" id="brandSubText">Interval Timer</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" id="soundBtn" title="Toggle sound" onclick="toggleSound()">🔊</button>
+      <button class="btn-icon" id="fullscreenBtn" title="Fullscreen" onclick="toggleFullscreen()">⛶</button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TIMER CARD -->
+    <div class="timer-card" id="timerCard">
+
+      <div class="interval-label">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusLabel">Ready</span>
+      </div>
+
+      <div class="ring-wrap">
+        <svg class="ring-svg" viewBox="0 0 260 260" id="ringSvg">
+          <circle class="ring-track" cx="130" cy="130" r="115"/>
+          <circle class="ring-progress" id="ringProgress" cx="130" cy="130" r="115"
+            stroke-dasharray="722.6" stroke-dashoffset="0"/>
+        </svg>
+        <div class="ring-inner"></div>
+        <div class="ring-center">
+          <div class="digits" id="digits">00:00:00</div>
+          <div class="session-name" id="sessionName">Select an interval</div>
+          <div class="wrapup-badge" id="wrapupBadge">⚡ Wrap up!</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="startBtn" onclick="handleStart()">▶ Start</button>
+        <button class="btn btn-secondary" id="pauseBtn" onclick="handlePause()" style="display:none">⏸ Pause</button>
+        <button class="btn btn-secondary" id="resumeBtn" onclick="handleResume()" style="display:none">▶ Resume</button>
+        <button class="btn btn-danger" id="stopBtn" onclick="handleStop()" style="display:none">■ Stop</button>
+        <button class="btn btn-danger" id="resetBtn" onclick="handleReset()">↺ Reset</button>
+      </div>
+      <div id="selectError" style="display:none;margin-top:10px;padding:8px 18px;background:rgba(224,48,48,0.13);border:1px solid rgba(224,48,48,0.35);border-radius:9px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:1px;color:#ff8080;text-align:center;">
+        ⚠ Select the Break time first
+      </div>
+
+      <!-- FINISH OVERLAY -->
+      <div class="finish-overlay" id="finishOverlay">
+        <div class="finish-emoji">🚀</div>
+        <div class="finish-text" id="finishText">Time's Up!</div>
+        <div class="finish-sub" id="finishSub">Great work. Session complete.</div>
+        <div class="finish-btns">
+          <button class="btn btn-primary" onclick="nextOrReset()">▶ Next</button>
+          <button class="btn btn-secondary" onclick="dismissFinish()">✕ Dismiss</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- PRESETS -->
+      <div class="panel">
+        <div class="panel-title">Quick intervals</div>
+        <div class="presets-grid">
+          <button class="preset-btn" onclick="presetClick(10,'10 min Break',event)" title="Click: start now · Double-click: add to queue">
+            <span class="pm">10</span><span class="pl">min · break</span>
+          </button>
+          <button class="preset-btn" onclick="presetClick(15,'15 min Break',event)" title="Click: start now · Double-click: add to queue">
+            <span class="pm">15</span><span class="pl">min · break</span>
+          </button>
+          <button class="preset-btn" onclick="presetClick(20,'20 min Break',event)" title="Click: start now · Double-click: add to queue">
+            <span class="pm">20</span><span class="pl">min · break</span>
+          </button>
+          <button class="preset-btn" onclick="presetClick(25,'25 min Break',event)" title="Click: start now · Double-click: add to queue">
+            <span class="pm">25</span><span class="pl">min · break</span>
+          </button>
+          <button class="preset-btn" onclick="presetClick(30,'30 min Break',event)" title="Click: start now · Double-click: add to queue">
+            <span class="pm">30</span><span class="pl">min · break</span>
+          </button>
+          <button class="preset-btn custom-btn" onclick="openModal()">
+            <span class="pm">+</span><span class="pl">custom</span>
+          </button>
+        </div>
+        <div style="font-size:10px;color:var(--text-dim);text-align:center;margin-top:8px;letter-spacing:0.5px;">Click: start now &nbsp;·&nbsp; Double-click: add to queue</div>
+      </div>
+
+      <!-- QUEUE -->
+      <div class="panel">
+        <div class="panel-title">Interval queue</div>
+        <div class="queue-list" id="queueList"></div>
+        <div class="empty-queue" id="emptyQueue" style="display:none">No intervals queued<br><span style="font-size:10px;opacity:0.7;">Double-click a preset or use Custom → Add to Queue</span></div>
+        <button class="btn btn-secondary" style="width:100%;margin-top:12px;font-size:12px;" onclick="clearQueue()">Clear queue</button>
+      </div>
+
+      <!-- SESSION LOG -->
+      <div class="panel">
+        <div class="panel-title">Session log</div>
+        <div class="log-list" id="logList"></div>
+        <div class="no-log" id="noLog">No intervals completed yet</div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© 2026 Calcus Workforce · AWS Training &nbsp;|&nbsp;
+    Built by <a href="https://github.com/ilahi123" target="_blank" rel="noopener">Mujahid Ilahi</a>
+  </p>
+  </footer>
+
+</div>
+
+<!-- CUSTOM INTERVAL MODAL -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <h3>⚙ Custom Interval</h3>
+    <div class="form-group">
+      <label class="form-label" for="customName">Interval name</label>
+      <input class="form-input" type="text" id="customName" placeholder="e.g. IAM Lab Exercise" maxlength="40">
+    </div>
+    <div class="time-row" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="form-group">
+        <label class="form-label" for="customHour">Hours</label>
+        <input class="form-input" type="number" id="customHour" min="0" max="23" placeholder="0" value="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="customMin">Minutes</label>
+        <input class="form-input" type="number" id="customMin" min="0" max="59" placeholder="0" value="5">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="customSec">Seconds</label>
+        <input class="form-input" type="number" id="customSec" min="0" max="59" placeholder="0" value="0">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="customAddToQueue()">+ Add to Queue</button>
+      <button class="btn btn-primary" onclick="customStartNow()">▶ Start Now</button>
+    </div>
+    <div style="text-align:right;margin-top:12px;">
+      <button class="btn btn-danger" style="font-size:12px;padding:7px 14px;" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+var state = {
+  totalSecs: 0,
+  remainSecs: 0,
+  running: false,
+  paused: false,
+  intervalId: null,
+  currentName: 'Interval',
+  soundOn: true,
+  queue: [],
+  log: [],
+  audioCtx: null
+};
+
+var CIRC = 2 * Math.PI * 115; // 722.6
+
+// ─────────────────────────────────────────────
+//  AUDIO (Web Audio API — no files needed)
+// ─────────────────────────────────────────────
+function getAudioCtx() {
+  if (!state.audioCtx) state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return state.audioCtx;
+}
+function beep(freq, dur, type, vol) {
+  if (!state.soundOn) return;
+  try {
+    var ctx = getAudioCtx();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol || 0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + dur);
+  } catch(e){}
+}
+function playWarnBeep() { beep(880, 0.15, 'square', 0.18); }
+function playFinishChime() {
+  [523, 659, 784, 1047].forEach(function(f, i) {
+    setTimeout(function(){ beep(f, 0.5, 'sine', 0.3); }, i * 130);
+  });
+}
+function playStartChime() {
+  [523, 659, 784, 1047].forEach(function(f, i) {
+    setTimeout(function(){ beep(f, 0.5, 'sine', 0.3); }, i * 130);
+  });
+  for (var s = 1; s <= 5; s++) {
+    (function(sec) {
+      setTimeout(function(){ if (state.soundOn && state.running) beep(660, 0.08, 'sine', 0.12); }, sec * 1000);
+    })(s);
+  }
+}
+function playTickBeep() { beep(660, 0.08, 'sine', 0.12); }
+
+// ─────────────────────────────────────────────
+//  TIMER CORE
+// ─────────────────────────────────────────────
+function loadInterval(secs, name) {
+  clearTimerInterval();
+  state.totalSecs = secs;
+  state.remainSecs = secs;
+  state.currentName = name || 'Interval';
+  state.running = false; state.paused = false;
+  updateUI();
+  setRing(1);
+  setPhase('idle');
+  document.getElementById('sessionName').textContent = state.currentName;
+  document.getElementById('finishOverlay').classList.remove('visible');
+}
+
+function handleStart() {
+  if (state.totalSecs === 0) {
+    showSelectError();
+    return;
+  }
+  if (state.running) return;
+  if (state.paused) { handleResume(); return; }
+  hideSelectError();
+  startTimer();
+}
+function handleStop() {
+  clearTimerInterval();
+  state.running = false; state.paused = false;
+  state.remainSecs = state.totalSecs;
+  document.getElementById('finishOverlay').classList.remove('visible');
+  updateUI(); setRing(1); setPhase('idle');
+  updateButtons('idle');
+}
+function showSelectError() {
+  var el = document.getElementById('selectError');
+  el.style.display = '';
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(function(){ el.style.display='none'; }, 3000);
+}
+function hideSelectError() {
+  document.getElementById('selectError').style.display = 'none';
+}
+function handlePause() {
+  clearTimerInterval();
+  state.running = false; state.paused = true;
+  document.getElementById('statusLabel').textContent = 'Paused';
+  document.getElementById('statusDot').className = 'dot';
+  document.getElementById('pauseBtn').style.display = 'none';
+  document.getElementById('resumeBtn').style.display = '';
+  document.getElementById('stopBtn').style.display = '';
+  document.getElementById('startBtn').style.display = 'none';
+}
+function handleResume() {
+  state.paused = false;
+  startTimer();
+}
+function handleReset() {
+  clearTimerInterval();
+  state.running = false; state.paused = false;
+  state.remainSecs = 0; state.totalSecs = 0;
+  document.getElementById('finishOverlay').classList.remove('visible');
+  document.getElementById('stopBtn').style.display = 'none';
+  updateUI(); setRing(0); setPhase('idle');
+  updateButtons('idle');
+}
+
+function startTimer() {
+  state.running = true; state.paused = false;
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('pauseBtn').style.display = '';
+  document.getElementById('resumeBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = '';
+  document.getElementById('statusLabel').textContent = 'Started';
+  document.getElementById('statusDot').className = 'dot running';
+  playStartChime();
+  state.intervalId = setInterval(tick, 1000);
+}
+
+function tick() {
+  if (state.remainSecs <= 0) {
+    onFinish(); return;
+  }
+  state.remainSecs--;
+  updateUI();
+  var pct = state.totalSecs > 0 ? state.remainSecs / state.totalSecs : 0;
+  setRing(pct);
+  checkPhase();
+}
+
+function checkPhase() {
+  var s = state.remainSecs;
+  var warnAt   = Math.min(60, Math.floor(state.totalSecs * 0.1)); // last 10% or last 60s
+  var dangerAt = Math.min(15, Math.floor(state.totalSecs * 0.03)); // last 3% or last 15s
+  if (s <= dangerAt) {
+    setPhase('danger');
+    playTickBeep();
+  } else if (s <= warnAt) {
+    setPhase('warn');
+    if (s === warnAt) playWarnBeep();
+  } else {
+    setPhase('normal');
+  }
+}
+
+function setPhase(ph) {
+  var rp = document.getElementById('ringProgress');
+  var dg = document.getElementById('digits');
+  var wb = document.getElementById('wrapupBadge');
+  rp.className = 'ring-progress';
+  dg.className = 'digits';
+  wb.className = 'wrapup-badge';
+  if (ph === 'warn') {
+    rp.className = 'ring-progress warn running';
+    dg.className = 'digits warn';
+    wb.className = 'wrapup-badge visible';
+  } else if (ph === 'danger') {
+    rp.className = 'ring-progress danger running';
+    dg.className = 'digits danger shaking';
+    wb.className = 'wrapup-badge visible';
+  } else if (ph === 'normal') {
+    if (state.running) rp.className = 'ring-progress running';
+  }
+}
+
+function onFinish() {
+  clearTimerInterval();
+  state.running = false;
+  state.remainSecs = 0;
+  updateUI(); setRing(0);
+  playFinishChime();
+  launchConfetti();
+  var overlay = document.getElementById('finishOverlay');
+  overlay.classList.add('visible');
+  var completed = state.currentName;
+  var ts = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  state.log.unshift({name: completed, time: ts, dur: fmtTime(state.totalSecs)});
+  renderLog();
+  document.getElementById('finishText').textContent = "Time's Up! 🚀";
+  document.getElementById('finishSub').textContent =
+    state.queue.length > 0
+      ? '"' + completed + '" done · ' + state.queue.length + ' interval(s) still queued'
+      : '"' + completed + '" complete. Well done!';
+  document.getElementById('statusLabel').textContent = 'Complete';
+  document.getElementById('statusDot').className = 'dot';
+  setPhase('idle');
+  updateButtons('finish');
+  // auto-advance if queue has items
+  if (state.queue.length > 0) {
+    setTimeout(function() {
+      nextOrReset();
+    }, 2800);
+  }
+}
+
+function nextOrReset() {
+  dismissFinish();
+  if (state.queue.length > 0) {
+    var next = state.queue.shift(); // take first item
+    renderQueue();
+    loadInterval(next.secs, next.name);
+    setTimeout(startTimer, 300);
+  } else {
+    // no more queue — reload same interval ready to start again
+    loadInterval(state.totalSecs, state.currentName);
+  }
+}
+
+function dismissFinish() {
+  document.getElementById('finishOverlay').classList.remove('visible');
+  updateButtons('idle');
+}
+
+function clearTimerInterval() {
+  if (state.intervalId) { clearInterval(state.intervalId); state.intervalId = null; }
+}
+
+function updateButtons(st) {
+  var s = document.getElementById('startBtn');
+  var p = document.getElementById('pauseBtn');
+  var r = document.getElementById('resumeBtn');
+  var stop = document.getElementById('stopBtn');
+  if (st === 'finish') {
+    s.style.display='none'; p.style.display='none';
+    r.style.display='none'; stop.style.display='none';
+  } else {
+    s.style.display=''; p.style.display='none';
+    r.style.display='none'; stop.style.display='none';
+  }
+}
+
+// ─────────────────────────────────────────────
+//  DISPLAY
+// ─────────────────────────────────────────────
+function fmtTime(s) {
+  var h  = Math.floor(s / 3600);
+  var m  = Math.floor((s % 3600) / 60);
+  var sc = s % 60;
+  return (h  < 10 ? '0' : '') + h  + ':' +
+         (m  < 10 ? '0' : '') + m  + ':' +
+         (sc < 10 ? '0' : '') + sc;
+}
+function updateUI() {
+  document.getElementById('digits').textContent = fmtTime(state.remainSecs);
+}
+function setRing(pct) {
+  var offset = CIRC * (1 - pct);
+  document.getElementById('ringProgress').style.strokeDashoffset = offset;
+}
+
+// ─────────────────────────────────────────────
+//  PRESETS
+// ─────────────────────────────────────────────
+var _presetClickTimer = null;
+function presetClick(mins, name, e) {
+  if (_presetClickTimer) {
+    // double-click detected
+    clearTimeout(_presetClickTimer);
+    _presetClickTimer = null;
+    addToQueue(mins * 60, name);
+  } else {
+    _presetClickTimer = setTimeout(function() {
+      _presetClickTimer = null;
+      loadInterval(mins * 60, name);
+    }, 280);
+  }
+}
+function selectPreset(mins, name) {
+  loadInterval(mins * 60, name);
+}
+
+// ─────────────────────────────────────────────
+//  QUEUE
+// ─────────────────────────────────────────────
+function addToQueue(secs, name) {
+  state.queue.push({secs: secs, name: name});
+  renderQueue();
+}
+function renderQueue() {
+  var list = document.getElementById('queueList');
+  var empty = document.getElementById('emptyQueue');
+  list.innerHTML = '';
+  if (state.queue.length === 0) { empty.style.display=''; return; }
+  empty.style.display = 'none';
+  state.queue.forEach(function(item, i) {
+    var div = document.createElement('div');
+    div.className = 'queue-item' + (i === 0 ? ' active-item' : '');
+    div.innerHTML =
+      '<span class="qi-name">' + escHtml(item.name) + '</span>' +
+      '<span class="qi-time">' + fmtTime(item.secs) + '</span>' +
+      '<button class="qi-del" onclick="removeQueue(' + i + ')" title="Remove">✕</button>';
+    list.appendChild(div);
+  });
+}
+function removeQueue(i) {
+  state.queue.splice(i, 1);
+  renderQueue();
+}
+function clearQueue() { state.queue = []; renderQueue(); }
+
+// ─────────────────────────────────────────────
+//  LOG
+// ─────────────────────────────────────────────
+function renderLog() {
+  var list = document.getElementById('logList');
+  var none = document.getElementById('noLog');
+  list.innerHTML = '';
+  if (state.log.length === 0) { none.style.display=''; return; }
+  none.style.display = 'none';
+  state.log.forEach(function(item) {
+    var div = document.createElement('div');
+    div.className = 'log-item';
+    div.innerHTML =
+      '<span class="li-name">' + escHtml(item.name) + '</span>' +
+      '<span class="li-dur" style="font-family:\'Rajdhani\',sans-serif;font-size:10px;color:var(--text-dim);margin-left:4px;">' + (item.dur || '') + '</span>' +
+      '<span class="li-time">' + item.time + '</span>';
+    list.appendChild(div);
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─────────────────────────────────────────────
+//  MODAL
+// ─────────────────────────────────────────────
+function openModal() {
+  document.getElementById('modalBackdrop').classList.add('open');
+  document.getElementById('customName').focus();
+}
+function closeModal() { document.getElementById('modalBackdrop').classList.remove('open'); }
+function closeModalOutside(e) { if (e.target === document.getElementById('modalBackdrop')) closeModal(); }
+
+function getCustomValues() {
+  var name  = document.getElementById('customName').value.trim() || 'Break';
+  var hours = parseInt(document.getElementById('customHour').value) || 0;
+  var mins  = parseInt(document.getElementById('customMin').value)  || 0;
+  var secs  = parseInt(document.getElementById('customSec').value)  || 0;
+  var total = hours * 3600 + mins * 60 + secs;
+  if (total <= 0) { alert('Please set a duration greater than 0.'); return null; }
+  return {name: name, secs: total};
+}
+function customAddToQueue() {
+  var v = getCustomValues(); if (!v) return;
+  addToQueue(v.secs, v.name);
+  closeModal();
+}
+function customStartNow() {
+  var v = getCustomValues(); if (!v) return;
+  loadInterval(v.secs, v.name);
+  closeModal();
+}
+
+// ─────────────────────────────────────────────
+//  SOUND TOGGLE
+// ─────────────────────────────────────────────
+function toggleSound() {
+  state.soundOn = !state.soundOn;
+  document.getElementById('soundBtn').textContent = state.soundOn ? '🔊' : '🔇';
+  document.getElementById('soundBtn').classList.toggle('active', !state.soundOn);
+}
+
+// ─────────────────────────────────────────────
+//  FULLSCREEN
+// ─────────────────────────────────────────────
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen && document.exitFullscreen();
+  }
+}
+document.addEventListener('fullscreenchange', function() {
+  document.getElementById('fullscreenBtn').textContent = document.fullscreenElement ? '⛶' : '⛶';
+});
+
+// ─────────────────────────────────────────────
+//  PARTICLES (floating AWS icons in background)
+// ─────────────────────────────────────────────
+(function() {
+  var c = document.getElementById('particles');
+  var ctx = c.getContext('2d');
+  var W, H, particles = [];
+
+  function resize() {
+    W = c.width = window.innerWidth;
+    H = c.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  var symbols = ['λ', '☁', '⬡', '◎', '⟁', '⬢'];
+
+  function mkParticle() {
+    return {
+      x: Math.random() * W,
+      y: H + 20,
+      size: 10 + Math.random() * 14,
+      speed: 0.25 + Math.random() * 0.5,
+      opacity: 0.04 + Math.random() * 0.1,
+      drift: (Math.random() - 0.5) * 0.4,
+      symbol: symbols[Math.floor(Math.random() * symbols.length)],
+      color: Math.random() > 0.5 ? '#1b4580' : '#2a5fa0'
+    };
+  }
+
+  for (var i = 0; i < 18; i++) {
+    var p = mkParticle();
+    p.y = Math.random() * H;
+    particles.push(p);
+  }
+
+  function animateParticles() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(function(p, i) {
+      ctx.globalAlpha = p.opacity;
+      ctx.fillStyle = p.color;
+      ctx.font = p.size + 'px monospace';
+      ctx.fillText(p.symbol, p.x, p.y);
+      p.y -= p.speed;
+      p.x += p.drift;
+      if (p.y < -30) {
+        particles[i] = mkParticle();
+      }
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(animateParticles);
+  }
+  animateParticles();
+})();
+
+// ─────────────────────────────────────────────
+//  CONFETTI
+// ─────────────────────────────────────────────
+function launchConfetti() {
+  var c = document.getElementById('confetti-canvas');
+  var ctx = c.getContext('2d');
+  c.width = window.innerWidth;
+  c.height = window.innerHeight;
+
+  var pieces = [];
+  var colors = ['#1b4580','#2a5fa0','#e8a020','#f5b840','#ffffff','#4ee89a','#ff6b6b'];
+
+  for (var i = 0; i < 130; i++) {
+    pieces.push({
+      x: Math.random() * c.width,
+      y: -10 - Math.random() * 120,
+      w: 6 + Math.random() * 8,
+      h: 4 + Math.random() * 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - 0.5) * 5,
+      vy: 2.5 + Math.random() * 4,
+      rot: Math.random() * Math.PI * 2,
+      rotV: (Math.random() - 0.5) * 0.18,
+      life: 1
+    });
+  }
+
+  var startTime = Date.now();
+
+  function draw() {
+    ctx.clearRect(0, 0, c.width, c.height);
+    var elapsed = Date.now() - startTime;
+    var done = true;
+
+    pieces.forEach(function(p) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.08;
+      p.rot += p.rotV;
+      p.life = Math.max(0, 1 - (elapsed - 1200) / 1800);
+
+      if (p.y < c.height + 20) done = false;
+
+      ctx.save();
+      ctx.globalAlpha = p.life > 0 ? p.life : 0;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+
+    if (!done || elapsed < 2500) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, c.width, c.height);
+  }
+  draw();
+}
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
+window.addEventListener('load', function() {
+  renderQueue();
+  renderLog();
+  document.getElementById('emptyQueue').style.display = '';
+});
+
+// keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.code === 'Space') { e.preventDefault(); if (state.running) handlePause(); else if (state.paused) handleResume(); else handleStart(); }
+  if (e.code === 'KeyR') handleReset();
+  if (e.code === 'KeyM') toggleSound();
+  if (e.code === 'KeyF') toggleFullscreen();
+});
+</script>
+</body>
+</html>
