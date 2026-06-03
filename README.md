@@ -139,7 +139,7 @@ Then open a Pull Request.
 
 ## 📄 License
 
-MIT © [YOUR_NAME](https://github.com/ilahi123)  
+MIT © [Mujahid Ilahi](https://github.com/ilahi123)  
 Free to use, modify, and distribute.
 
 ---
